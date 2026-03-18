@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Appointments - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">🏥 HMS Portal</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/doctor/list" class="nav-link">Doctors</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_DOCTOR')"><a href="/patient/list" class="nav-link">Patients</a></li>
+            <li><a href="/appointment/list" class="nav-link active">Appointments</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/billing/list" class="nav-link">Billing</a></li>
+            <li>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="flex-between mb-4">
+            <h2>Appointments Directory</h2>
+            <a href="/appointment/add" class="btn btn-primary" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Book Appointment</a>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Doctor</th>
+                        <th>Patient</th>
+                        <th>Date & Time</th>
+                        <th>Status</th>
+                        <th>Notes</th>
+                        <th sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="appointment : ${appointments}">
+                        <td th:text="${appointment.id}"></td>
+                        <td th:text="${appointment.doctor != null ? appointment.doctor.lastName : 'N/A'}"></td>
+                        <td th:text="${appointment.patient != null ? appointment.patient.lastName : 'N/A'}"></td>
+                        <td th:text="${appointment.appointmentDateTime}"></td>
+                        <td th:text="${appointment.status}"></td>
+                        <td th:text="${appointment.notes}"></td>
+                        <td class="action-links" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                            <a th:href="@{/appointment/edit/{id}(id=${appointment.id})}" class="edit-link">Edit</a>
+                            <a th:href="@{/appointment/delete/{id}(id=${appointment.id})}" class="delete-link" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

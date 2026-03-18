@@ -1,0 +1,77 @@
+package com.hospital.management.controller;
+
+import com.hospital.management.entity.Appointment;
+import com.hospital.management.service.AppointmentService;
+import com.hospital.management.service.DoctorService;
+import com.hospital.management.service.PatientService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.*;
+
+@Controller
+@RequestMapping("/appointment")
+public class AppointmentController {
+
+    @Autowired
+    private AppointmentService appointmentService;
+
+    @Autowired
+    private DoctorService doctorService;
+
+    @Autowired
+    private PatientService patientService;
+
+    @GetMapping("/list")
+    public String listAppointments(Model model) {
+        model.addAttribute("appointments", appointmentService.getAllAppointments());
+        return "appointments";
+    }
+
+    @GetMapping("/add")
+    public String addAppointmentForm(Model model, org.springframework.security.core.Authentication authentication) {
+        model.addAttribute("appointment", new Appointment());
+        model.addAttribute("doctors", doctorService.getAllDoctors());
+        
+        if (authentication != null && authentication.getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"))) {
+            String username = authentication.getName();
+            com.hospital.management.entity.Patient currentPatient = patientService.getAllPatients().stream()
+                    .filter(p -> p.getUser() != null && username.equals(p.getUser().getUsername()))
+                    .findFirst()
+                    .orElse(null);
+            
+            if (currentPatient != null) {
+                model.addAttribute("patients", java.util.Collections.singletonList(currentPatient));
+                model.addAttribute("isPatientRole", true);
+            } else {
+                model.addAttribute("patients", java.util.Collections.emptyList());
+                model.addAttribute("isPatientRole", true);
+            }
+        } else {
+            model.addAttribute("patients", patientService.getAllPatients());
+            model.addAttribute("isPatientRole", false);
+        }
+        
+        return "appointment_form";
+    }
+
+    @PostMapping("/save")
+    public String saveAppointment(@ModelAttribute("appointment") Appointment appointment) {
+        appointmentService.saveAppointment(appointment);
+        return "redirect:/appointment/list";
+    }
+
+    @GetMapping("/edit/{id}")
+    public String editAppointmentForm(@PathVariable Long id, Model model) {
+        model.addAttribute("appointment", appointmentService.getAppointmentById(id));
+        model.addAttribute("doctors", doctorService.getAllDoctors());
+        model.addAttribute("patients", patientService.getAllPatients());
+        return "appointment_form";
+    }
+
+    @GetMapping("/delete/{id}")
+    public String deleteAppointment(@PathVariable Long id) {
+        appointmentService.deleteAppointment(id);
+        return "redirect:/appointment/list";
+    }
+}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Billings - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">🏥 HMS Portal</a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/doctor/list" class="nav-link">Doctors</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_DOCTOR')"><a href="/patient/list" class="nav-link">Patients</a></li>
+            <li><a href="/appointment/list" class="nav-link">Appointments</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/billing/list" class="nav-link active">Billing</a></li>
+            <li>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="flex-between mb-4">
+            <h2>Billing Directory</h2>
+            <a href="/billing/add" class="btn btn-primary" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Create New Bill</a>
+        </div>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Patient</th>
+                        <th>Amount</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Description</th>
+                        <th sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="billing : ${billings}">
+                        <td th:text="${billing.id}"></td>
+                        <td th:text="${billing.patient != null ? billing.patient.lastName : 'N/A'}"></td>
+                        <td th:text="${'$' + billing.amount}"></td>
+                        <td th:text="${billing.billingDate}"></td>
+                        <td th:text="${billing.status}"></td>
+                        <td th:text="${billing.description}"></td>
+                        <td class="action-links" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                            <a th:href="@{/billing/edit/{id}(id=${billing.id})}" class="edit-link">Edit</a>
+                            <a th:href="@{/billing/delete/{id}(id=${billing.id})}" class="delete-link" onclick="return confirm('Are you sure?')">Delete</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Appointment - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">🏥 HMS Portal</a>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="glass-card">
+            <h2 class="mb-4">Appointment Details</h2>
+            <form th:action="@{/appointment/save}" th:object="${appointment}" method="post">
+                <input type="hidden" th:field="*{id}" />
+                <div class="form-group">
+                    <label class="form-label">Doctor</label>
+                    <select th:field="*{doctor}" class="form-control" required>
+                        <option value="" disabled>Select Doctor</option>
+                        <option th:each="doc : ${doctors}" th:value="${doc.id}" th:text="${doc.firstName + ' ' + doc.lastName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Patient</label>
+                    <select th:field="*{patient}" class="form-control" required>
+                        <option value="" disabled>Select Patient</option>
+                        <option th:each="pat : ${patients}" th:value="${pat.id}" th:text="${pat.firstName + ' ' + pat.lastName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Date & Time</label>
+                    <input type="datetime-local" th:field="*{appointmentDateTime}" class="form-control" required/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select th:field="*{status}" class="form-control" required>
+                        <option value="SCHEDULED">Scheduled</option>
+                        <option value="COMPLETED">Completed</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
+                </div>
+                
+                <div id="availability-warning" style="color: var(--danger); display: none; margin-bottom: 1rem; font-weight: 500;">
+                    Warning: This time slot is already booked for the selected doctor. Please choose a different time.
+                </div>
+
+                <div class="flex-between mt-4">
+                    <a href="/appointment/list" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" id="submit-btn" class="btn btn-primary">Save Appointment</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const doctorSelect = document.getElementById('doctor');
+        const dateTimeInput = document.getElementById('appointmentDateTime');
+        const submitBtn = document.getElementById('submit-btn');
+        const warningDiv = document.getElementById('availability-warning');
+
+        async function checkAvailability() {
+            const doctorId = doctorSelect.value;
+            const dateTimeStr = dateTimeInput.value;
+
+            if (!doctorId || !dateTimeStr) return;
+
+            // Extract date part (YYYY-MM-DD)
+            const dateOnly = dateTimeStr.split('T')[0];
+            const selectedTime = new Date(dateTimeStr);
+
+            try {
+                const response = await fetch(`/api/doctors/${doctorId}/appointments?date=${dateOnly}`);
+                if (!response.ok) return;
+
+                const appointments = await response.json();
+                let isBooked = false;
+
+                for (let appt of appointments) {
+                    const apptTime = new Date(appt.appointmentDateTime);
+                    
+                    // Check if selected time is within 15 minutes of an existing appointment
+                    const diffMinutes = Math.abs(selectedTime - apptTime) / (1000 * 60);
+                    
+                    if (diffMinutes < 15) {
+                        isBooked = true;
+                        break;
+                    }
+                }
+
+                if (isBooked) {
+                    warningDiv.style.display = 'block';
+                    submitBtn.disabled = true;
+                    submitBtn.style.opacity = '0.5';
+                    submitBtn.style.cursor = 'not-allowed';
+                } else {
+                    warningDiv.style.display = 'none';
+                    submitBtn.disabled = false;
+                    submitBtn.style.opacity = '1';
+                    submitBtn.style.cursor = 'pointer';
+                }
+
+            } catch (error) {
+                console.error("Error checking availability:", error);
+            }
+        }
+
+        doctorSelect.addEventListener('change', checkAvailability);
+        dateTimeInput.addEventListener('change', checkAvailability);
+    </script>
+</body>
+</html>

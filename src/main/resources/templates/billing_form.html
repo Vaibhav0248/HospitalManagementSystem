@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manage Bill - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">🏥 HMS Portal</a>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="glass-card">
+            <h2 class="mb-4">Billing Details</h2>
+            <form th:action="@{/billing/save}" th:object="${billing}" method="post">
+                <input type="hidden" th:field="*{id}" />
+                <div class="form-group">
+                    <label class="form-label">Patient</label>
+                    <select th:field="*{patient}" class="form-control" required>
+                        <option value="" disabled>Select Patient</option>
+                        <option th:each="pat : ${patients}" th:value="${pat.id}" th:text="${pat.firstName + ' ' + pat.lastName}"></option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Amount ($)</label>
+                    <input type="number" step="0.01" th:field="*{amount}" class="form-control" required/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Billing Date</label>
+                    <input type="date" th:field="*{billingDate}" class="form-control" required/>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Status</label>
+                    <select th:field="*{status}" class="form-control" required>
+                        <option value="PENDING">Pending</option>
+                        <option value="PAID">Paid</option>
+                        <option value="CANCELLED">Cancelled</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <textarea th:field="*{description}" class="form-control" rows="3" required></textarea>
+                </div>
+                <div class="flex-between mt-4">
+                    <a href="/billing/list" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary">Save Bill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

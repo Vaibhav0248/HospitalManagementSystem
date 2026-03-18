@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">
+            🏥 HMS Portal
+        </a>
+        <ul class="navbar-nav">
+            <li><a href="/dashboard" class="nav-link active">Dashboard</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/doctor/list" class="nav-link">Doctors</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_DOCTOR')"><a href="/patient/list" class="nav-link">Patients</a></li>
+            <li><a href="/appointment/list" class="nav-link">Appointments</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/billing/list" class="nav-link">Billing</a></li>
+            <li>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container">
+        <div class="flex-between mb-4">
+            <h2>Welcome, <span sec:authentication="name">User</span>!</h2>
+            <span style="color: var(--text-secondary);">Roles: <span sec:authentication="principal.authorities"></span></span>
+        </div>
+
+        <div class="dashboard-grid">
+            <div class="glass-card stat-card">
+                <h3>Total Patients</h3>
+                <div class="value">Manage</div>
+                <a href="/patient/list" class="btn btn-primary" style="margin-top: 1rem;">View Patients</a>
+            </div>
+            <div class="glass-card stat-card">
+                <h3>Total Doctors</h3>
+                <div class="value">Directory</div>
+                <a href="/doctor/list" class="btn btn-primary" style="margin-top: 1rem;">View Doctors</a>
+            </div>
+            <div class="glass-card stat-card">
+                <h3>Appointments</h3>
+                <div class="value">Schedule</div>
+                <a href="/appointment/list" class="btn btn-primary" style="margin-top: 1rem;">View Appointments</a>
+            </div>
+            <div class="glass-card stat-card" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                <h3>Billing</h3>
+                <div class="value">Finances</div>
+                <a href="/billing/list" class="btn btn-primary" style="margin-top: 1rem;">View Billing</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
