@@ -30,7 +30,9 @@ public class AppointmentController {
 
     @GetMapping("/add")
     public String addAppointmentForm(Model model, org.springframework.security.core.Authentication authentication) {
-        model.addAttribute("appointment", new Appointment());
+        if (!model.containsAttribute("appointment")) {
+            model.addAttribute("appointment", new Appointment());
+        }
         model.addAttribute("doctors", doctorService.getAllDoctors());
         
         if (authentication != null && authentication.getAuthorities().contains(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_PATIENT"))) {
@@ -56,9 +58,15 @@ public class AppointmentController {
     }
 
     @PostMapping("/save")
-    public String saveAppointment(@ModelAttribute("appointment") Appointment appointment) {
-        appointmentService.saveAppointment(appointment);
-        return "redirect:/appointment/list";
+    public String saveAppointment(@ModelAttribute("appointment") Appointment appointment, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
+        try {
+            appointmentService.saveAppointment(appointment);
+            return "redirect:/appointment/list";
+        } catch (RuntimeException ex) {
+            redirectAttributes.addFlashAttribute("errorMessage", ex.getMessage());
+            redirectAttributes.addFlashAttribute("appointment", appointment);
+            return "redirect:/appointment/add";
+        }
     }
 
     @GetMapping("/edit/{id}")

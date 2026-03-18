@@ -41,13 +41,13 @@ public class AppointmentServiceImpl implements AppointmentService {
     public Appointment saveAppointment(Appointment appointment) {
         // Double Booking Prevention
         if (appointment.getId() == null) {
-            // Check if slot is taken (assume 15 minute slots)
+            // Check if slot is taken (assume 60 minute slots)
             LocalDateTime startTime = appointment.getAppointmentDateTime();
-            LocalDateTime endTime = startTime.plusMinutes(15);
+            LocalDateTime endTime = startTime.plusMinutes(60);
             
             boolean isBooked = appointmentRepository.existsByDoctorIdAndAppointmentDateTimeBetween(
                     appointment.getDoctor().getId(), 
-                    startTime.minusMinutes(14), // Prevents overlapping
+                    startTime.minusMinutes(59), // Prevents overlapping within 1 hour
                     endTime
             );
             
@@ -88,7 +88,7 @@ public class AppointmentServiceImpl implements AppointmentService {
             }
             // Only count scheduled appointments that haven't happened yet
             if ("SCHEDULED".equals(earlierAppt.getStatus()) && earlierAppt.getAppointmentDateTime().isAfter(LocalDateTime.now())) {
-                waitTimeMinutes += 15; // Assume 15 minutes per patient
+                waitTimeMinutes += 60; // Assume 60 minutes per patient
             }
         }
         

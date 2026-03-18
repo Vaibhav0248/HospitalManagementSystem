@@ -20,7 +20,7 @@ import java.util.HashSet;
 public class DataInitializer {
 
     @Bean
-    CommandLineRunner initDatabase(RoleRepository roleRepository, UserRepository userRepository, DoctorRepository doctorRepository, PatientRepository patientRepository, PasswordEncoder passwordEncoder) {
+    CommandLineRunner initDatabase(RoleRepository roleRepository, UserRepository userRepository, DoctorRepository doctorRepository, PatientRepository patientRepository, com.hospital.management.repository.AppointmentRepository appointmentRepository, PasswordEncoder passwordEncoder) {
         return args -> {
             Role adminRole = roleRepository.findByName("ROLE_ADMIN").orElseGet(() -> {
                 Role role = new Role();
@@ -111,6 +111,62 @@ public class DataInitializer {
                 staff.setRoles(roles);
                 staff.setEnabled(true);
                 userRepository.save(staff);
+            }
+
+            // --- Add Extra Dummy Doctors ---
+            String[] doctorLastNames = {"House", "Grey", "Shepherd"};
+            String[] doctorFirstNames = {"Gregory", "Meredith", "Derek"};
+            String[] doctorSpecs = {"Diagnostician", "General Surgery", "Neurosurgery"};
+
+            for (int i = 0; i < doctorLastNames.length; i++) {
+                final String username = "doctor" + (i + 2);
+                final int index = i;
+                
+                User docUser = userRepository.findByUsername(username).orElseGet(() -> {
+                    User u = new User();
+                    u.setUsername(username);
+                    u.setPassword(passwordEncoder.encode("doctor123"));
+                    HashSet<Role> roles = new HashSet<>();
+                    roles.add(doctorRole);
+                    u.setRoles(roles);
+                    u.setEnabled(true);
+                    return userRepository.save(u);
+                });
+
+                if (doctorRepository.findAll().stream().noneMatch(d -> d.getUser() != null && username.equals(d.getUser().getUsername()))) {
+                    Doctor d = new Doctor();
+                    d.setUser(docUser);
+                    d.setFirstName(doctorFirstNames[index]);
+                    d.setLastName(doctorLastNames[index]);
+                    d.setEmail(username + "@hospital.com");
+                    d.setPhone("555-010" + index);
+                    d.setSpecialization(doctorSpecs[index]);
+                    doctorRepository.save(d);
+                }
+            }
+
+            // --- Add Dummy Appointments for the Current Week ---
+            if (appointmentRepository.count() == 0) {
+                Patient mockPatient = patientRepository.findAll().stream().findFirst().orElse(null);
+                java.util.List<Doctor> allDoctors = doctorRepository.findAll();
+                
+                if (mockPatient != null && !allDoctors.isEmpty()) {
+                    LocalDate today = LocalDate.now();
+                    // Let's create appointments for yesterday, today, tomorrow, and the day after
+                    int[] dayOffsets = {-1, 0, 1, 2};
+                    
+                    for (int offset : dayOffsets) {
+                        for (Doctor d : allDoctors) {
+                            com.hospital.management.entity.Appointment appt = new com.hospital.management.entity.Appointment();
+                            appt.setDoctor(d);
+                            appt.setPatient(mockPatient);
+                            appt.setAppointmentDateTime(today.plusDays(offset).atTime(10 + offset, 0)); // vary the time
+                            appt.setStatus("SCHEDULED");
+                            appt.setNotes("Dummy appointment");
+                            appointmentRepository.save(appt);
+                        }
+                    }
+                }
             }
         };
     }

@@ -14,6 +14,11 @@
     <div class="container" style="max-width: 600px;">
         <div class="glass-card">
             <h2 class="mb-4">Appointment Details</h2>
+            
+            <div th:if="${errorMessage}" style="color: var(--danger); background: #fee2e2; padding: 10px; border-radius: 4px; border: 1px solid #fca5a5; margin-bottom: 1rem; font-weight: 500;">
+                <span th:text="${errorMessage}"></span>
+            </div>
+
             <form th:action="@{/appointment/save}" th:object="${appointment}" method="post">
                 <input type="hidden" th:field="*{id}" />
                 <div class="form-group">
@@ -85,10 +90,10 @@
                 for (let appt of appointments) {
                     const apptTime = new Date(appt.appointmentDateTime);
                     
-                    // Check if selected time is within 15 minutes of an existing appointment
+                    // Check if selected time is within 60 minutes of an existing appointment
                     const diffMinutes = Math.abs(selectedTime - apptTime) / (1000 * 60);
                     
-                    if (diffMinutes < 15) {
+                    if (diffMinutes < 60) {
                         isBooked = true;
                         break;
                     }
