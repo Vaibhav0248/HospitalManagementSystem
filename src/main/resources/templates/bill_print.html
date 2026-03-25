@@ -71,8 +71,8 @@
             <p>Bill ID: <span th:text="${billing.id}"></span><br>
             Date: <span th:text="${#temporals.format(billing.billingDate, 'dd-MM-yyyy')}"></span></p>
 
-            <p>Patient Name: <span th:text="${billing.patient.firstName + ' ' + billing.patient.lastName}"></span><br>
-            Doctor Name : <span th:text="${'Dr. ' + billing.appointment.doctor.firstName + ' ' + billing.appointment.doctor.lastName}"></span><br>
+            <p>Patient Name: <span th:text="${(billing.patient.firstName ?: '') + ' ' + (billing.patient.lastName ?: '')}"></span><br>
+            Doctor Name : <span th:text="${'Dr. ' + (billing.appointment.doctor.firstName ?: '') + ' ' + (billing.appointment.doctor.lastName ?: '')}"></span><br>
             Specialization: <span th:text="${billing.appointment.doctor.specialization}"></span></p>
 
             <div class="separator"></div>

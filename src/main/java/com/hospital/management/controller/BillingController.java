@@ -33,7 +33,7 @@ public class BillingController {
         if (appointment == null) {
             return "redirect:/appointment/list";
         }
-        
+
         Billing billing = billingService.getBillingByAppointmentId(appointmentId);
         if (billing == null) {
             billing = new Billing();
@@ -48,7 +48,7 @@ public class BillingController {
             billing.setDiscount(0.0);
             billing.setAmount(500.0); // will be re-calculated
         }
-        
+
         model.addAttribute("billing", billing);
         model.addAttribute("appointment", appointment);
         return "billing_generate";
@@ -58,26 +58,43 @@ public class BillingController {
     public String saveGeneratedBill(@PathVariable Long appointmentId, @ModelAttribute("billing") Billing billing) {
         com.hospital.management.entity.Appointment appointment = appointmentService.getAppointmentById(appointmentId);
         if (appointment != null) {
-            billing.setAppointment(appointment);
-            billing.setPatient(appointment.getPatient());
-            
-            Double consultation = billing.getConsultationFee() != null ? billing.getConsultationFee() : 0.0;
-            Double test = billing.getTestFee() != null ? billing.getTestFee() : 0.0;
-            Double medicines = billing.getMedicinesFee() != null ? billing.getMedicinesFee() : 0.0;
-            Double discount = billing.getDiscount() != null ? billing.getDiscount() : 0.0;
-            
+            Billing existingBilling = billingService.getBillingByAppointmentId(appointmentId);
+            if (existingBilling == null) {
+                existingBilling = new Billing();
+                existingBilling.setBillingDate(java.time.LocalDate.now());
+                existingBilling.setStatus("PAID");
+                existingBilling.setDescription("Generated Bill");
+            }
+
+            existingBilling.setAppointment(appointment);
+            existingBilling.setPatient(appointment.getPatient());
+
+            existingBilling.setConsultationFee(billing.getConsultationFee());
+            existingBilling.setTestType(billing.getTestType());
+            existingBilling.setTestFee(billing.getTestFee());
+            existingBilling.setMedicinesFee(billing.getMedicinesFee());
+            existingBilling.setDiscount(billing.getDiscount());
+            existingBilling.setPaymentMode(billing.getPaymentMode());
+
+            Double consultation = existingBilling.getConsultationFee() != null ? existingBilling.getConsultationFee()
+                    : 0.0;
+            Double test = existingBilling.getTestFee() != null ? existingBilling.getTestFee() : 0.0;
+            Double medicines = existingBilling.getMedicinesFee() != null ? existingBilling.getMedicinesFee() : 0.0;
+            Double discount = existingBilling.getDiscount() != null ? existingBilling.getDiscount() : 0.0;
+
             Double subtotal = consultation + test + medicines;
             Double subtotalAfterDiscount = subtotal - discount;
             Double gst = subtotalAfterDiscount * 0.18; // 18% GST
             Double total = subtotalAfterDiscount + gst;
-            
-            billing.setGst(gst);
-            billing.setTotalAmount(total);
-            billing.setAmount(total);
-            
-            billingService.saveBilling(billing);
+
+            existingBilling.setGst(gst);
+            existingBilling.setTotalAmount(total);
+            existingBilling.setAmount(total);
+
+            Billing savedBilling = billingService.saveBilling(existingBilling);
+            return "redirect:/billing/print/" + savedBilling.getId();
         }
-        return "redirect:/billing/print/" + billing.getId();
+        return "redirect:/appointment/list";
     }
 
     @GetMapping("/print/{id}")
@@ -92,8 +109,8 @@ public class BillingController {
 
     @GetMapping("/add")
     public String addBillingForm(Model model) {
-        model.addAttribute("billing", new Billing());
-        model.addAttribute("patients", patientService.getAllPatients());
+        mmodel.ddAttribute("patients", patie
+
         return "billing_form";
     }
 
