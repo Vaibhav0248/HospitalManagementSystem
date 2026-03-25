@@ -184,7 +184,7 @@
         <div class="modal-content">
             <span class="close" onclick="closeModal()">&times;</span>
             <h3 id="modalDoctorName" style="margin-top: 0; margin-bottom: 5px;">Doctor Schedule</h3>
-            <p style="color: #6b7280; font-size: 0.9rem; margin-top: 0;">Showing availability for the current week</p>
+            <p style="color: #6b7280; font-size: 0.9rem; margin-top: 0;">Showing availability for the current and next week</p>
 
             <div class="week-grid" id="weekGrid">
                 <!-- Days will be populated here by JS -->
@@ -204,7 +204,7 @@
             const sunday = new Date(today);
             sunday.setDate(today.getDate() - currentDay);
 
-            for (let i = 0; i < 7; i++) {
+            for (let i = 0; i < 14; i++) {
                 const d = new Date(sunday);
                 d.setDate(sunday.getDate() + i);
                 dates.push(d);
@@ -235,10 +235,10 @@
                 grid.innerHTML = ''; // Clear loading text
 
                 // Fetch data for each day
-                for (let i = 0; i < 7; i++) {
+                for (let i = 0; i < 14; i++) {
                     const date = weekDates[i];
                     const dateStr = formatDateForApi(date);
-                    const dayName = daysOfWeek[i];
+                    const dayName = daysOfWeek[i % 7];
                     const displayDate = date.toLocaleDateString([], { month: 'short', day: 'numeric' });
 
                     const col = document.createElement('div');

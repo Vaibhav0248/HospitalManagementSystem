@@ -38,6 +38,7 @@
                         <th>Patient</th>
                         <th>Date & Time</th>
                         <th>Status</th>
+                        <th>Priority</th>
                         <th>Notes</th>
                         <th sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Actions</th>
                     </tr>
@@ -48,7 +49,32 @@
                         <td th:text="${appointment.doctor != null ? appointment.doctor.lastName : 'N/A'}"></td>
                         <td th:text="${appointment.patient != null ? appointment.patient.lastName : 'N/A'}"></td>
                         <td th:text="${appointment.appointmentDateTime}"></td>
-                        <td th:text="${appointment.status}"></td>
+                        <td>
+                        <!-- BOOKED -->
+                        <span th:if="${appointment.status == 'SCHEDULED'}"
+                            class="badge"
+                            style="background: green; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">
+                            SCHEDULED
+                        </span>
+
+                        <!-- CANCELLED -->
+                        <span th:if="${appointment.status == 'CANCELLED'}"
+                            class="badge"
+                            style="background: gray; color: rgb(113, 7, 7); padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">
+                            CANCELLED
+                        </span>
+
+                        <!-- COMPLETED -->
+                        <span th:if="${appointment.status == 'COMPLETED'}"
+                            class="badge"
+                            style="background: blue; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem;">
+                            COMPLETED
+                        </span>
+                    </td>
+                        <td>
+                            <span th:if="${appointment.priority == 'EMERGENCY'}" class="badge" style="background: var(--danger); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.8rem; font-weight: bold;">EMERGENCY</span>
+                            <span th:unless="${appointment.priority == 'EMERGENCY'}" th:text="${appointment.priority}"></span>
+                        </td>
                         <td th:text="${appointment.notes}"></td>
                         <td class="action-links" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
                             <a th:href="@{/appointment/edit/{id}(id=${appointment.id})}" class="edit-link">Edit</a>

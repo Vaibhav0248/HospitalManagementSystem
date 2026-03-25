@@ -57,46 +57,7 @@
             <h2>Welcome, <span sec:authentication="name">Patient</span>!</h2>
         </div>
 
-        <div th:if="${not #lists.isEmpty(myAppointments)}">
-            <!-- Find the next upcoming appointment -->
-            <div th:with="nextAppt=${myAppointments[0]}"> 
-               <!-- Quick hack in thymeleaf: assuming the list is sorted, or we just grab the first one for the live demo -->
-               
-               <div class="live-status-card pulse" id="liveCard" th:if="${nextAppt.status == 'SCHEDULED'}">
-                    <h3>Estimated Wait Time</h3>
-                    <div class="wait-time" id="waitTimeDisplay">Calculating...</div>
-                    <div class="token-info">
-                        Appointment ID: #<span th:text="${nextAppt.id}"></span> | Doctor: Dr. <span th:text="${nextAppt.doctor.lastName}"></span>
-                    </div>
-                </div>
-
-                <script th:inline="javascript">
-                    /*<![CDATA[*/
-                    const apptId = /*[[${nextAppt.id}]]*/ null;
-                    const status = /*[[${nextAppt.status}]]*/ 'UNKNOWN';
-                    
-                    async function fetchWaitTime() {
-                        if (status !== 'SCHEDULED') return;
-                        try {
-                            const response = await fetch(`/api/appointments/${apptId}/wait-time`);
-                            if (response.ok) {
-                                const minutes = await response.text();
-                                document.getElementById('waitTimeDisplay').innerText = `~${minutes} min`;
-                            }
-                        } catch (e) {
-                            console.error("Failed to fetch wait time.");
-                        }
-                    }
-
-                    // Fetch immediately and then poll every 30 seconds
-                    if (apptId && status === 'SCHEDULED') {
-                        fetchWaitTime();
-                        setInterval(fetchWaitTime, 30000); 
-                    }
-                    /*]]>*/
-                </script>
-            </div>
-        </div>
+        
 
         <div class="glass-card mb-4" style="margin-bottom: 2rem;">
             <h3>Check Doctor Availability</h3>
@@ -138,6 +99,22 @@
                         alert("Please select both a doctor and a date.");
                         return;
                     }
+                    
+                    const parts = dateVal.split('-');
+                    const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const maxDate = new Date(today);
+                    maxDate.setDate(today.getDate() + 14);
+
+                    if (selectedDate < today || selectedDate > maxDate) {
+                        resultsDiv.style.display = 'block';
+                        list.style.display = 'none';
+                        noMsg.style.display = 'block';
+                        noMsg.innerHTML = "Schedule not generated for this date.";
+                        noMsg.style.color = "var(--secondary)";
+                        return;
+                    }
 
                     try {
                         const response = await fetch(`/api/doctors/${doctorId}/appointments?date=${dateVal}`);
@@ -150,6 +127,8 @@
                         if (appointments.length === 0) {
                             list.style.display = 'none';
                             noMsg.style.display = 'block';
+                            noMsg.innerHTML = "No appointments booked for this date! Complete availability.";
+                            noMsg.style.color = "var(--success)";
                         } else {
                             list.style.display = 'block';
                             noMsg.style.display = 'none';
@@ -173,37 +152,7 @@
             </script>
         </div>
 
-        <div class="glass-card">
-            <h3>My Appointments</h3>
-            <div th:if="${#lists.isEmpty(myAppointments)}">
-                <p style="color: var(--text-secondary);">You have no appointments booked yet.</p>
-            </div>
-            
-            <div class="table-wrapper" th:if="${not #lists.isEmpty(myAppointments)}">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>ID</th>
-                            <th>Doctor</th>
-                            <th>Date & Time</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="appt : ${myAppointments}">
-                            <td th:text="'#' + ${appt.id}"></td>
-                            <td th:text="'Dr. ' + ${appt.doctor.lastName}"></td>
-                            <td th:text="${#temporals.format(appt.appointmentDateTime, 'MMM dd, yyyy HH:mm')}"></td>
-                            <td>
-                                <span th:if="${appt.status == 'SCHEDULED'}" style="color: var(--primary); font-weight: 600;">Scheduled</span>
-                                <span th:if="${appt.status == 'COMPLETED'}" style="color: var(--secondary); font-weight: 600;">Completed</span>
-                                <span th:if="${appt.status == 'CANCELLED'}" style="color: var(--danger); font-weight: 600;">Cancelled</span>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
+        
     </div>
 </body>
 </html>

@@ -47,6 +47,13 @@
                         <option value="CANCELLED">Cancelled</option>
                     </select>
                 </div>
+                <div class="form-group" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
+                    <label class="form-label">Priority</label>
+                    <select th:field="*{priority}" class="form-control" id="priority-select" required>
+                        <option value="NORMAL">Normal</option>
+                        <option value="EMERGENCY">Emergency Override</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Notes</label>
                     <textarea th:field="*{notes}" class="form-control" rows="3"></textarea>
@@ -69,6 +76,7 @@
         const dateTimeInput = document.getElementById('appointmentDateTime');
         const submitBtn = document.getElementById('submit-btn');
         const warningDiv = document.getElementById('availability-warning');
+        const prioritySelect = document.getElementById('priority-select');
 
         async function checkAvailability() {
             const doctorId = doctorSelect.value;
@@ -101,9 +109,20 @@
 
                 if (isBooked) {
                     warningDiv.style.display = 'block';
-                    submitBtn.disabled = true;
-                    submitBtn.style.opacity = '0.5';
-                    submitBtn.style.cursor = 'not-allowed';
+                    
+                    if (prioritySelect && prioritySelect.value === 'EMERGENCY') {
+                        submitBtn.disabled = false;
+                        submitBtn.style.opacity = '1';
+                        submitBtn.style.cursor = 'pointer';
+                        warningDiv.innerHTML = "Warning: Time slot is already booked. Existing patients will be rescheduled by +1 hour.";
+                        warningDiv.style.color = "#d97706";
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.style.opacity = '0.5';
+                        submitBtn.style.cursor = 'not-allowed';
+                        warningDiv.innerHTML = "Warning: This time slot is already booked for the selected doctor. Please choose a different time.";
+                        warningDiv.style.color = "var(--danger)";
+                    }
                 } else {
                     warningDiv.style.display = 'none';
                     submitBtn.disabled = false;
@@ -118,6 +137,9 @@
 
         doctorSelect.addEventListener('change', checkAvailability);
         dateTimeInput.addEventListener('change', checkAvailability);
+        if (prioritySelect) {
+            prioritySelect.addEventListener('change', checkAvailability);
+        }
     </script>
 </body>
 </html>

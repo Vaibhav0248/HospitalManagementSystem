@@ -22,10 +22,12 @@ public class Appointment {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "doctor_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Doctor doctor;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "patient_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private Patient patient;
 
     @Column(nullable = false)
@@ -33,6 +35,9 @@ public class Appointment {
 
     @Column(nullable = false)
     private String status; // SCHEDULED, COMPLETED, CANCELLED
+
+    @Column(nullable = false)
+    private String priority = "NORMAL"; // NORMAL, EMERGENCY
 
     @Column(columnDefinition = "TEXT")
     private String notes;

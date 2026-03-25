@@ -145,29 +145,41 @@ public class DataInitializer {
                 }
             }
 
-            // --- Add Dummy Appointments for the Current Week ---
-            if (appointmentRepository.count() == 0) {
-                Patient mockPatient = patientRepository.findAll().stream().findFirst().orElse(null);
+            // --- Clean and Regenerate Dummy Appointments for 14 Days ---
+            java.util.List<com.hospital.management.entity.Appointment> oldDummies = appointmentRepository.findAll().stream()
+                .filter(a -> "Dummy appointment".equals(a.getNotes()))
+                .toList();
+            appointmentRepository.deleteAll(oldDummies);
+
+            Patient mockPatient = patientRepository.findAll().stream().findFirst().orElse(null);
                 java.util.List<Doctor> allDoctors = doctorRepository.findAll();
                 
                 if (mockPatient != null && !allDoctors.isEmpty()) {
                     LocalDate today = LocalDate.now();
-                    // Let's create appointments for yesterday, today, tomorrow, and the day after
-                    int[] dayOffsets = {-1, 0, 1, 2};
+                    java.util.Random random = new java.util.Random();
                     
-                    for (int offset : dayOffsets) {
-                        for (Doctor d : allDoctors) {
+                    for (int offset = -2; offset <= 14; offset++) {
+                        // Shuffle doctors for realism
+                        java.util.Collections.shuffle(allDoctors, random);
+                        
+                        // Select a random number of doctors to be booked on this day (e.g., half of them)
+                        int numDoctorsToBook = random.nextInt(allDoctors.size()) + 1;
+                        
+                        for (int i = 0; i < numDoctorsToBook; i++) {
+                            Doctor d = allDoctors.get(i);
                             com.hospital.management.entity.Appointment appt = new com.hospital.management.entity.Appointment();
                             appt.setDoctor(d);
                             appt.setPatient(mockPatient);
-                            appt.setAppointmentDateTime(today.plusDays(offset).atTime(10 + offset, 0)); // vary the time
+                            
+                            // Randomize time between 9 AM and 4 PM
+                            int hour = 9 + random.nextInt(8);
+                            appt.setAppointmentDateTime(today.plusDays(offset).atTime(hour, 0));
                             appt.setStatus("SCHEDULED");
                             appt.setNotes("Dummy appointment");
                             appointmentRepository.save(appt);
                         }
                     }
                 }
-            }
         };
     }
 }
