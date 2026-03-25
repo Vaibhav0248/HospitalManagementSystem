@@ -23,8 +23,17 @@ public class AppointmentController {
     private PatientService patientService;
 
     @GetMapping("/list")
-    public String listAppointments(Model model) {
-        model.addAttribute("appointments", appointmentService.getAllAppointments());
+    public String listAppointments(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null && authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
+            com.hospital.management.entity.Doctor doctor = doctorService.getDoctorByUsername(authentication.getName());
+            if (doctor != null) {
+                model.addAttribute("appointments", appointmentService.getAppointmentsByDoctorId(doctor.getId()));
+            } else {
+                model.addAttribute("appointments", java.util.Collections.emptyList());
+            }
+        } else {
+            model.addAttribute("appointments", appointmentService.getAllAppointments());
+        }
         return "appointments";
     }
 

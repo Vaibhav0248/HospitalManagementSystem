@@ -14,9 +14,29 @@ public class PatientController {
     @Autowired
     private PatientService patientService;
 
+    @Autowired
+    private com.hospital.management.service.DoctorService doctorService;
+
+    @Autowired
+    private com.hospital.management.service.AppointmentService appointmentService;
+
     @GetMapping("/list")
-    public String listPatients(Model model) {
-        model.addAttribute("patients", patientService.getAllPatients());
+    public String listPatients(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null && authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
+            com.hospital.management.entity.Doctor doctor = doctorService.getDoctorByUsername(authentication.getName());
+            if (doctor != null) {
+                java.util.List<com.hospital.management.entity.Appointment> appointments = appointmentService.getAppointmentsByDoctorId(doctor.getId());
+                java.util.List<com.hospital.management.entity.Patient> doctorPatients = appointments.stream()
+                        .map(com.hospital.management.entity.Appointment::getPatient)
+                        .distinct()
+                        .collect(java.util.stream.Collectors.toList());
+                model.addAttribute("patients", doctorPatients);
+            } else {
+                model.addAttribute("patients", java.util.Collections.emptyList());
+            }
+        } else {
+            model.addAttribute("patients", patientService.getAllPatients());
+        }
         return "patients";
     }
 

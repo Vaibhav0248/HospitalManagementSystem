@@ -6,6 +6,7 @@ import java.util.List;
 public interface DoctorService {
     List<Doctor> getAllDoctors();
     Doctor getDoctorById(Long id);
+    Doctor getDoctorByUsername(String username);
     Doctor saveDoctor(Doctor doctor);
     void deleteDoctor(Long id);
 }
