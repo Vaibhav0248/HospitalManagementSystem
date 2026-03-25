@@ -15,9 +15,26 @@ public class DoctorController {
     private DoctorService doctorService;
 
     @GetMapping("/list")
-    public String listDoctors(Model model) {
+    public String listDoctors(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null
+                && authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
+            return "redirect:/doctor/dashboard";
+        }
         model.addAttribute("doctors", doctorService.getAllDoctors());
         return "doctors";
+    }
+
+    @GetMapping("/dashboard")
+    public String doctorDashboard(Model model, org.springframework.security.core.Authentication authentication) {
+        if (authentication != null
+                && authentication.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_DOCTOR"))) {
+            Doctor doctor = doctorService.getDoctorByUsername(authentication.getName());
+            if (doctor != null) {
+                model.addAttribute("doctor", doctor);
+                return "doctor_dashboard";
+            }
+        }
+        return "redirect:/dashboard";
     }
 
     @GetMapping("/add")
@@ -26,6 +43,7 @@ public class DoctorController {
         return "doctor_form";
     }
 
+                
     @PostMapping("/save")
     public String saveDoctor(@ModelAttribute("doctor") Doctor doctor) {
         doctorService.saveDoctor(doctor);

@@ -152,9 +152,11 @@ public class DataInitializer {
             appointmentRepository.deleteAll(oldDummies);
 
             Patient mockPatient = patientRepository.findAll().stream().findFirst().orElse(null);
-                java.util.List<Doctor> allDoctors = doctorRepository.findAll();
-                
-                if (mockPatient != null && !allDoctors.isEmpty()) {
+            java.util.List<Doctor> allDoctors = doctorRepository.findAll().stream()
+                    .filter(d -> d.getUser() != null && d.getUser().getUsername().startsWith("doctor"))
+                    .collect(java.util.stream.Collectors.toList());
+            
+            if (mockPatient != null && !allDoctors.isEmpty()) {
                     LocalDate today = LocalDate.now();
                     java.util.Random random = new java.util.Random();
                     

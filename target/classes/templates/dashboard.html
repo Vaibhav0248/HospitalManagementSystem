@@ -37,10 +37,15 @@
                 <div class="value">Manage</div>
                 <a href="/patient/list" class="btn btn-primary" style="margin-top: 1rem;">View Patients</a>
             </div>
-            <div class="glass-card stat-card">
+            <div class="glass-card stat-card" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">
                 <h3>Total Doctors</h3>
                 <div class="value">Directory</div>
                 <a href="/doctor/list" class="btn btn-primary" style="margin-top: 1rem;">View Doctors</a>
+            </div>
+            <div class="glass-card stat-card" sec:authorize="hasAuthority('ROLE_DOCTOR')">
+                <h3>My Schedule</h3>
+                <div class="value">Timetable</div>
+                <a href="/doctor/dashboard" class="btn btn-primary" style="margin-top: 1rem;">View Schedule</a>
             </div>
             <div class="glass-card stat-card">
                 <h3>Appointments</h3>
