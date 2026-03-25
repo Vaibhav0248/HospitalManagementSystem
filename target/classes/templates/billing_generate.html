@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generate Bill - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <script>
+        function calculateTotal() {
+            const consultationFee = parseFloat(document.getElementById('consultationFee').value) || 0;
+            const testFee = parseFloat(document.getElementById('testFee').value) || 0;
+            const medicinesFee = parseFloat(document.getElementById('medicinesFee').value) || 0;
+            const discount = parseFloat(document.getElementById('discount').value) || 0;
+            
+            const subtotal = consultationFee + testFee + medicinesFee;
+            const subtotalAfterDiscount = subtotal - discount;
+            const gst = subtotalAfterDiscount * 0.18;
+            const total = subtotalAfterDiscount + gst;
+            
+            document.getElementById('subtotal').textContent = "₹" + subtotal.toFixed(2);
+            document.getElementById('gstAmount').textContent = "₹" + gst.toFixed(2);
+            document.getElementById('totalAmount').textContent = "₹" + total.toFixed(2);
+        }
+    </script>
+</head>
+<body onload="calculateTotal()">
+    <nav class="navbar">
+        <a href="/dashboard" class="navbar-brand">🏥 HMS Portal</a>
+    </nav>
+
+    <div class="container" style="max-width: 600px;">
+        <div class="glass-card">
+            <h2 class="mb-4">Generate Bill</h2>
+            
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                <p><strong>Patient Name:</strong> <span th:text="${appointment.patient.firstName + ' ' + appointment.patient.lastName}"></span></p>
+                <p><strong>Doctor Name:</strong> <span th:text="${appointment.doctor.firstName + ' ' + appointment.doctor.lastName}"></span></p>
+                <p><strong>Specialization:</strong> <span th:text="${appointment.doctor.specialization}"></span></p>
+                <p><strong>Date:</strong> <span th:text="${#temporals.format(appointment.appointmentDateTime, 'dd-MM-yyyy')}"></span></p>
+            </div>
+
+            <form th:action="@{/billing/generate/{id}(id=${appointment.id})}" th:object="${billing}" method="post">
+                <div class="form-group">
+                    <label class="form-label">Consultation Fee (₹)</label>
+                    <input type="number" step="0.01" th:field="*{consultationFee}" id="consultationFee" class="form-control" oninput="calculateTotal()" required/>
+                </div>
+                
+                <div class="form-group" style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label class="form-label">Lab Test</label>
+                        <select th:field="*{testType}" class="form-control" required>
+                            <option value="None">None</option>
+                            <option value="Blood Test">Blood Test</option>
+                            <option value="Urine Test">Urine Test</option>
+                            <option value="X-Ray">X-Ray</option>
+                            <option value="MRI Scan">MRI Scan</option>
+                            <option value="CT Scan">CT Scan</option>
+                            <option value="ECG">ECG</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label">Test Fee (₹)</label>
+                        <input type="number" step="0.01" th:field="*{testFee}" id="testFee" class="form-control" oninput="calculateTotal()" required/>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Medicines (₹)</label>
+                    <input type="number" step="0.01" th:field="*{medicinesFee}" id="medicinesFee" class="form-control" oninput="calculateTotal()" required/>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Discount (₹)</label>
+                    <input type="number" step="0.01" th:field="*{discount}" id="discount" class="form-control" oninput="calculateTotal()" required/>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Payment Mode</label>
+                    <select th:field="*{paymentMode}" class="form-control" required>
+                        <option value="UPI">UPI</option>
+                        <option value="CASH">Cash</option>
+                        <option value="CARD">Card</option>
+                    </select>
+                </div>
+
+                <div style="border-top: 1px solid rgba(255,255,255,0.2); margin-top: 20px; padding-top: 20px;">
+                    <div class="flex-between mb-2">
+                        <span>Subtotal:</span>
+                        <strong id="subtotal">₹0.00</strong>
+                    </div>
+                    <div class="flex-between mb-2">
+                        <span>GST (18%):</span>
+                        <strong id="gstAmount">₹0.00</strong>
+                    </div>
+                    <div class="flex-between" style="font-size: 1.2rem; margin-top: 10px; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 4px;">
+                        <span>TOTAL:</span>
+                        <strong id="totalAmount">₹0.00</strong>
+                    </div>
+                </div>
+
+                <div class="flex-between mt-4">
+                    <a href="/appointment/list" class="btn btn-secondary">Cancel</a>
+                    <button type="submit" class="btn btn-primary" style="background-color: #28a745;">Save & Generate Bill</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

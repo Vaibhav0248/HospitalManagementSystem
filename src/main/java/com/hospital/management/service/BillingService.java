@@ -7,6 +7,7 @@ public interface BillingService {
     List<Billing> getAllBillings();
     Billing getBillingById(Long id);
     List<Billing> getBillingsByPatientId(Long patientId);
+    Billing getBillingByAppointmentId(Long appointmentId);
     Billing saveBilling(Billing billing);
     void deleteBilling(Long id);
 }

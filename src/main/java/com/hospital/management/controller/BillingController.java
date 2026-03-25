@@ -18,10 +18,76 @@ public class BillingController {
     @Autowired
     private PatientService patientService;
 
+    @Autowired
+    private com.hospital.management.service.AppointmentService appointmentService;
+
     @GetMapping("/list")
     public String listBillings(Model model) {
         model.addAttribute("billings", billingService.getAllBillings());
         return "billings";
+    }
+
+    @GetMapping("/generate/{appointmentId}")
+    public String generateBillForm(@PathVariable Long appointmentId, Model model) {
+        com.hospital.management.entity.Appointment appointment = appointmentService.getAppointmentById(appointmentId);
+        if (appointment == null) {
+            return "redirect:/appointment/list";
+        }
+        
+        Billing billing = billingService.getBillingByAppointmentId(appointmentId);
+        if (billing == null) {
+            billing = new Billing();
+            billing.setAppointment(appointment);
+            billing.setPatient(appointment.getPatient());
+            billing.setBillingDate(java.time.LocalDate.now());
+            billing.setStatus("PENDING");
+            billing.setConsultationFee(500.0);
+            billing.setTestType("None");
+            billing.setTestFee(0.0);
+            billing.setMedicinesFee(0.0);
+            billing.setDiscount(0.0);
+            billing.setAmount(500.0); // will be re-calculated
+        }
+        
+        model.addAttribute("billing", billing);
+        model.addAttribute("appointment", appointment);
+        return "billing_generate";
+    }
+
+    @PostMapping("/generate/{appointmentId}")
+    public String saveGeneratedBill(@PathVariable Long appointmentId, @ModelAttribute("billing") Billing billing) {
+        com.hospital.management.entity.Appointment appointment = appointmentService.getAppointmentById(appointmentId);
+        if (appointment != null) {
+            billing.setAppointment(appointment);
+            billing.setPatient(appointment.getPatient());
+            
+            Double consultation = billing.getConsultationFee() != null ? billing.getConsultationFee() : 0.0;
+            Double test = billing.getTestFee() != null ? billing.getTestFee() : 0.0;
+            Double medicines = billing.getMedicinesFee() != null ? billing.getMedicinesFee() : 0.0;
+            Double discount = billing.getDiscount() != null ? billing.getDiscount() : 0.0;
+            
+            Double subtotal = consultation + test + medicines;
+            Double subtotalAfterDiscount = subtotal - discount;
+            Double gst = subtotalAfterDiscount * 0.18; // 18% GST
+            Double total = subtotalAfterDiscount + gst;
+            
+            billing.setGst(gst);
+            billing.setTotalAmount(total);
+            billing.setAmount(total);
+            
+            billingService.saveBilling(billing);
+        }
+        return "redirect:/billing/print/" + billing.getId();
+    }
+
+    @GetMapping("/print/{id}")
+    public String printBill(@PathVariable Long id, Model model) {
+        Billing billing = billingService.getBillingById(id);
+        if (billing == null) {
+            return "redirect:/billing/list";
+        }
+        model.addAttribute("billing", billing);
+        return "bill_print";
     }
 
     @GetMapping("/add")

@@ -29,7 +29,31 @@ public class Billing {
     private Appointment appointment;
 
     @Column(nullable = false)
-    private Double amount;
+    private Double amount; // Kept for backwards compatibility but not really needed if we use totalAmount
+
+    @Column
+    private Double consultationFee;
+
+    @Column
+    private String testType;
+
+    @Column
+    private Double testFee;
+
+    @Column
+    private Double medicinesFee;
+
+    @Column
+    private Double discount;
+
+    @Column
+    private Double gst;
+
+    @Column
+    private Double totalAmount;
+
+    @Column
+    private String paymentMode;
 
     @Column(nullable = false)
     private String status; // PENDING, PAID, CANCELLED

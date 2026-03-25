@@ -30,6 +30,11 @@ public class BillingServiceImpl implements BillingService {
     }
 
     @Override
+    public Billing getBillingByAppointmentId(Long appointmentId) {
+        return billingRepository.findByAppointmentId(appointmentId).orElse(null);
+    }
+
+    @Override
     public Billing saveBilling(Billing billing) {
         return billingRepository.save(billing);
     }
