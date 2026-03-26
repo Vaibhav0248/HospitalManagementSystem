@@ -69,6 +69,9 @@ public class AppointmentController {
     @PostMapping("/save")
     public String saveAppointment(@ModelAttribute("appointment") Appointment appointment, org.springframework.web.servlet.mvc.support.RedirectAttributes redirectAttributes) {
         try {
+            if (appointment.getId() == null || appointment.getStatus() == null) {
+                appointment.setStatus("SCHEDULED");
+            }
             appointmentService.saveAppointment(appointment);
             return "redirect:/appointment/list";
         } catch (RuntimeException ex) {
@@ -86,9 +89,13 @@ public class AppointmentController {
         return "appointment_form";
     }
 
-    @GetMapping("/delete/{id}")
-    public String deleteAppointment(@PathVariable Long id) {
-        appointmentService.deleteAppointment(id);
-        return "redirect:/appointment/list";
+    @GetMapping("/cancel/{id}")
+    public String cancelAppointment(@PathVariable Long id, @RequestHeader(value = "referer", required = false) String referer) {
+        Appointment appointment = appointmentService.getAppointmentById(id);
+        if (appointment != null) {
+            appointment.setStatus("CANCELLED");
+            appointmentService.saveAppointment(appointment);
+        }
+        return "redirect:" + (referer != null ? referer : "/appointment/list");
     }
 }

@@ -45,28 +45,30 @@ public class AppointmentServiceImpl implements AppointmentService {
         if (appointment.getId() == null) {
             LocalDateTime startTime = appointment.getAppointmentDateTime();
             LocalDateTime endTime = startTime.plusMinutes(60);
-            
+
             // Fetch all overlapping appointments
             List<Appointment> overlaps = appointmentRepository.findByDoctorIdAndAppointmentDateTimeBetween(
-                    appointment.getDoctor().getId(), 
+                    appointment.getDoctor().getId(),
                     startTime.minusMinutes(59), // Prevents overlapping within 1 hour
-                    endTime
-            );
-            
+                    endTime);
+
+            // Allow booking if the existing appointment is cancelled
+            overlaps.removeIf(a -> "CANCELLED".equalsIgnoreCase(a.getStatus()));
+
             if (!overlaps.isEmpty()) {
                 if ("EMERGENCY".equalsIgnoreCase(appointment.getPriority())) {
                     // Check if there are any existing EMERGENCY appointments in this slot
                     boolean hasEmergencyOverlap = overlaps.stream()
                             .anyMatch(a -> "EMERGENCY".equalsIgnoreCase(a.getPriority()));
-                            
+
                     if (hasEmergencyOverlap) {
                         throw new RuntimeException("This time slot is already booked for an EMERGENCY.");
                     }
-                    
+
                     // Move existing NORMAL appointments by 1 hour
                     for (Appointment overlap : overlaps) {
                         overlap.setAppointmentDateTime(overlap.getAppointmentDateTime().plusHours(1));
-                        overlap.setNotes((overlap.getNotes() == null ? "" : overlap.getNotes() + "\n") 
+                        overlap.setNotes((overlap.getNotes() == null ? "" : overlap.getNotes() + "\n")
                                 + "(Rescheduled +1 hr due to Emergency)");
                         appointmentRepository.save(overlap);
                     }
@@ -76,7 +78,7 @@ public class AppointmentServiceImpl implements AppointmentService {
                 }
             }
         }
-        
+
         return appointmentRepository.save(appointment);
     }
 
@@ -89,14 +91,15 @@ public class AppointmentServiceImpl implements AppointmentService {
     public List<Appointment> getAppointmentsForDoctorOnDate(Long doctorId, LocalDate date) {
         LocalDateTime startOfDay = date.atStartOfDay();
         LocalDateTime endOfDay = date.atTime(LocalTime.MAX);
-        return updatePastAppointments(appointmentRepository.findAppointmentsForDoctorOnDate(doctorId, startOfDay, endOfDay));
+        return updatePastAppointments(
+                appointmentRepository.findAppointmentsForDoctorOnDate(doctorId, startOfDay, endOfDay));
     }
 
     private List<Appointment> updatePastAppointments(List<Appointment> appointments) {
         boolean updated = false;
         LocalDateTime now = LocalDateTime.now();
         java.util.List<Appointment> toUpdate = new java.util.ArrayList<>();
-        
+
         for (Appointment a : appointments) {
             if ("SCHEDULED".equals(a.getStatus()) && a.getAppointmentDateTime().isBefore(now)) {
                 a.setStatus("COMPLETED");
@@ -104,11 +107,11 @@ public class AppointmentServiceImpl implements AppointmentService {
                 updated = true;
             }
         }
-        
+
         if (updated) {
             appointmentRepository.saveAll(toUpdate);
         }
-        
+
         return appointments;
     }
 
@@ -128,11 +131,12 @@ public class AppointmentServiceImpl implements AppointmentService {
                 break; // Reached current appointment
             }
             // Only count scheduled appointments that haven't happened yet
-            if ("SCHEDULED".equals(earlierAppt.getStatus()) && earlierAppt.getAppointmentDateTime().isAfter(LocalDateTime.now())) {
+            if ("SCHEDULED".equals(earlierAppt.getStatus())
+                    && earlierAppt.getAppointmentDateTime().isAfter(LocalDateTime.now())) {
                 waitTimeMinutes += 60; // Assume 60 minutes per patient
             }
         }
-        
+
         return waitTimeMinutes;
     }
 }

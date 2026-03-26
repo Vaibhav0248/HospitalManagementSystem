@@ -51,7 +51,6 @@ public class PatientServiceImpl implements PatientService {
             com.hospital.management.entity.Role patientRole = roleRepository.findByName("ROLE_PATIENT").orElse(null);
             if (patientRole != null) {
                 user.getRoles().add(patientRole);
-
             }
             user = userRepository.save(user);
             patient.setUser(user);
