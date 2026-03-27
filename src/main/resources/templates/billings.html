@@ -26,7 +26,6 @@
     <div class="container">
         <div class="flex-between mb-4">
             <h2>Billing Directory</h2>
-            <a href="/billing/add" class="btn btn-primary" sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')">Create New Bill</a>
         </div>
 
         <div class="table-wrapper">
@@ -46,7 +45,7 @@
                     <tr th:each="billing : ${billings}">
                         <td th:text="${billing.id}"></td>
                         <td th:text="${billing.patient != null ? billing.patient.lastName : 'N/A'}"></td>
-                        <td th:text="${'$' + billing.amount}"></td>
+                        <td th:text="${'₹' + billing.amount}"></td>
                         <td th:text="${billing.billingDate}"></td>
                         <td th:text="${billing.status}"></td>
                         <td th:text="${billing.description}"></td>

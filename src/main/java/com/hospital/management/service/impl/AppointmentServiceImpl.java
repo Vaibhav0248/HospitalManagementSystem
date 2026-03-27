@@ -52,8 +52,6 @@ public class AppointmentServiceImpl implements AppointmentService {
                     startTime.minusMinutes(59), // Prevents overlapping within 1 hour
                     endTime);
 
-            // Allow booking if the existing appointment is cancelled
-            overlaps.removeIf(a -> "CANCELLED".equalsIgnoreCase(a.getStatus()));
 
             if (!overlaps.isEmpty()) {
                 if ("EMERGENCY".equalsIgnoreCase(appointment.getPriority())) {

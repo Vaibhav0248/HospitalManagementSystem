@@ -13,7 +13,7 @@
             <li><a href="/dashboard" class="nav-link">Dashboard</a></li>
             <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/doctor/list" class="nav-link">Doctors</a></li>
             <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF', 'ROLE_DOCTOR')"><a href="/patient/list" class="nav-link">Patients</a></li>
-            <li><a href="/appointment/list" class="nav-link active">Appointments</a></li>
+            <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/appointment/list" class="nav-link active">Appointments</a></li>
             <li sec:authorize="hasAnyAuthority('ROLE_ADMIN', 'ROLE_STAFF')"><a href="/billing/list" class="nav-link">Billing</a></li>
             <li>
                 <form th:action="@{/logout}" method="post" style="display: inline;">

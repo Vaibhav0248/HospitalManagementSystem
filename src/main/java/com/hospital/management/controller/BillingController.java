@@ -107,24 +107,17 @@ public class BillingController {
         return "bill_print";
     }
 
-    @GetMapping("/add")
-    public String addBillingForm(Model model) {
-        mmodel.ddAttribute("patients", patie
-
-        return "billing_form";
-    }
-
     @PostMapping("/save")
     public String saveBilling(@ModelAttribute("billing") Billing billing) {
         billingService.saveBilling(billing);
         return "redirect:/billing/list";
     }
 
-    @GetMapping("/edit/{id}")
-    public String editBillingForm(@PathVariable Long id, Model model) {
-        model.addAttribute("billing", billingService.getBillingById(id));
+    @GetMapping("/edit/{appointmentId}")
+    public String editBillingForm(@PathVariable Long appointmentId, Model model) {
+        model.addAttribute("billing", billingService.getBillingById(appointmentId));
         model.addAttribute("patients", patientService.getAllPatients());
-        return "billing_form";
+        return "billing_generate";
     }
 
     @GetMapping("/delete/{id}")

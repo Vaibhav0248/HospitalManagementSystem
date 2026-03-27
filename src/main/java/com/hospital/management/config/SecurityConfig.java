@@ -43,11 +43,13 @@ public class SecurityConfig {
                         .permitAll()
                         .requestMatchers("/admin/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers("/doctor/**").hasAnyAuthority("ROLE_DOCTOR", "ROLE_ADMIN","ROLE_STAFF")
-                        .requestMatchers("/patient/**").hasAnyAuthority("ROLE_PATIENT", "ROLE_ADMIN","ROLE_DOCTOR","ROLE_STAFF")
+                        .requestMatchers("/patient/list").hasAnyAuthority("ROLE_DOCTOR")
+                        .requestMatchers("/patient/dashboard").hasAnyAuthority("ROLE_PATIENT")
+                        .requestMatchers("/patient/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
                         .requestMatchers("/staff/**").hasAnyAuthority("ROLE_STAFF", "ROLE_ADMIN")
-                        .requestMatchers("/appointment/add", "/appointment/save", "/appointment/edit/**",
-                                "/appointment/delete/**")
-                        .hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
+                        .requestMatchers("/appointment/list").hasAnyAuthority("ROLE_DOCTOR")
+                        .requestMatchers("/appointment/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
+                        .requestMatchers("/billing/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_STAFF")
                         .requestMatchers("/api/**").authenticated()
                         .anyRequest().authenticated())
                 .formLogin(form -> form
