@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Dashboard - HMS</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .live-status-card {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.4);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+        .live-status-card h3 {
+            margin: 0;
+            font-size: 1.2rem;
+            font-weight: 500;
+            opacity: 0.9;
+        }
+        .live-status-card .wait-time {
+            font-size: 3rem;
+            font-weight: 700;
+            margin: 0.5rem 0;
+        }
+        .live-status-card .token-info {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+        .pulse {
+            animation: pulse-animation 2s infinite;
+        }
+        @keyframes pulse-animation {
+            0% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 255, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <a href="/patient/dashboard" class="navbar-brand">🏥 HMS Patient Portal</a>
+        <ul class="navbar-nav">
+            <li>
+                <form th:action="@{/logout}" method="post" style="display: inline;">
+                    <button type="submit" class="btn btn-danger" style="padding: 0.5rem 1rem; font-size: 0.9rem;">Logout</button>
+                </form>
+            </li>
+        </ul>
+    </nav>
+
+    <div class="container" style="max-width: 800px;">
+        <div class="flex-between mb-4">
+            <h2>Welcome, <span sec:authentication="name">Patient</span>!</h2>
+        </div>
+
+        
+
+        <div class="glass-card mb-4" style="margin-bottom: 2rem;">
+            <h3>Check Doctor Availability</h3>
+            <p style="color: var(--text-secondary); margin-bottom: 1rem;">Select a doctor and date to see their scheduled appointments.</p>
+            
+            <div class="form-group" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label">Doctor</label>
+                    <select id="avail-doctor" class="form-control">
+                        <option value="" disabled selected>Select a Doctor</option>
+                        <option th:each="doctor : ${doctors}" th:value="${doctor.id}" th:text="'Dr. ' + ${doctor.firstName} + ' ' + ${doctor.lastName} + ' - ' + ${doctor.specialization}"></option>
+                    </select>
+                </div>
+                <div style="flex: 1; min-width: 200px;">
+                    <label class="form-label">Date</label>
+                    <input type="date" id="avail-date" class="form-control" />
+                </div>
+                <div style="display: flex; align-items: flex-end;">
+                    <button id="check-avail-btn" class="btn btn-primary" onclick="checkDoctorAvailability()">Check Availability</button>
+                </div>
+            </div>
+
+            <div id="availability-results" style="margin-top: 1.5rem; display: none;">
+                <h4 style="margin-bottom: 0.5rem;">Booked Time Slots</h4>
+                <ul id="booked-slots-list" style="list-style: none; padding: 0; margin: 0; color: var(--danger); font-weight: 500;">
+                </ul>
+                <div id="no-bookings-msg" style="color: var(--secondary); font-weight: 500; display: none;">No appointments booked for this date! Complete availability.</div>
+            </div>
+            
+            <script>
+                async function checkDoctorAvailability() {
+                    const doctorId = document.getElementById('avail-doctor').value;
+                    const dateVal = document.getElementById('avail-date').value;
+                    const resultsDiv = document.getElementById('availability-results');
+                    const list = document.getElementById('booked-slots-list');
+                    const noMsg = document.getElementById('no-bookings-msg');
+
+                    if (!doctorId || !dateVal) {
+                        alert("Please select both a doctor and a date.");
+                        return;
+                    }
+                    
+                    const parts = dateVal.split('-');
+                    const selectedDate = new Date(parts[0], parts[1] - 1, parts[2]);
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const maxDate = new Date(today);
+                    maxDate.setDate(today.getDate() + 14);
+
+                    if (selectedDate < today || selectedDate > maxDate) {
+                        resultsDiv.style.display = 'block';
+                        list.style.display = 'none';
+                        noMsg.style.display = 'block';
+                        noMsg.innerHTML = "Schedule not generated for this date.";
+                        noMsg.style.color = "var(--secondary)";
+                        return;
+                    }
+
+                    try {
+                        const response = await fetch(`/api/doctors/${doctorId}/appointments?date=${dateVal}`);
+                        if (!response.ok) throw new Error("API failed");
+                        
+                        const appointments = await response.json();
+                        list.innerHTML = '';
+                        resultsDiv.style.display = 'block';
+
+                        if (appointments.length === 0) {
+                            list.style.display = 'none';
+                            noMsg.style.display = 'block';
+                            noMsg.innerHTML = "No appointments booked for this date! Complete availability.";
+                            noMsg.style.color = "var(--success)";
+                        } else {
+                            list.style.display = 'block';
+                            noMsg.style.display = 'none';
+                            
+                            appointments.forEach(appt => {
+                                const dt = new Date(appt.appointmentDateTime);
+                                const timeStr = dt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                                
+                                const li = document.createElement('li');
+                                li.style.padding = "0.5rem";
+                                li.style.borderBottom = "1px solid rgba(0,0,0,0.1)";
+                                li.innerHTML = `🚫 <b>${timeStr}</b> - Status: ${appt.status}`;
+                                list.appendChild(li);
+                            });
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Could not load availability. Make sure date is formatted correctly.");
+                    }
+                }
+            </script>
+        </div>
+
+        
+    </div>
+</body>
+</html>
